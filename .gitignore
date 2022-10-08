@@ -1,3 +1,4 @@
 _nodecache
 tags.json
 venv/
+__pycache__/

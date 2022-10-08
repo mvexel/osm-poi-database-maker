@@ -42,6 +42,13 @@ pip install -r requirements.txt
 filter.py OSM_FILE
 ```
 
+## Extras
+If you want a database with only point features without discarding OSM polygons that have POI attributes, you can use the `ways_to_cantroids.sql` SQL script after populating the database. This script converts all polygons that are smaller than a reasonable threshold (the script uses 20000 m<sup>2</sup>) to nodes by taking the centroid of the polygon and incrementing the id value by 36000000000 to avoid conflicts in the overlapping id spaces. Any polygons larger than the threshold value are considered to be meaningless as point features.
+
+## Thanks
+
+Thanks to @joto and @lonvia for creating and maintaining `osmium` and `pyosmium`!
+
 ## Support
 
 If you find this and / or my other work for the OSM community useful, please consider [supporting me on Patreon](https://patreon.com/mvexel). Thanks!

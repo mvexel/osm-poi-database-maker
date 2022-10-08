@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from copy import deepcopy
 from datetime import datetime
 from io import StringIO
 import os
@@ -10,6 +9,15 @@ import requests
 import osmium
 import psycopg2
 import settings
+import logging
+
+# Initialize global logger
+logger = logging.getLogger("osm-poi-database-maker")
+logger.setLevel(settings.LOG_LEVEL)
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 class PostgresWriter:
@@ -46,20 +54,25 @@ class PostgresWriter:
                             ),
                         )
         except psycopg2.errors.UniqueViolation:
-            print(
-                """ERROR: A duplicate OSM id was encountered while attempting to copy OSM objects to PostgreSQL.
+            logger.error(
+                """A duplicate OSM id was encountered while attempting to copy OSM objects to PostgreSQL.
 Most likely, you are trying to populate an OSM database that already has OSM data in it, 
 for example if you ran this script previously with the same OSM input file."""
             )
             sys.exit(1)
         except (psycopg2.errors.UndefinedTable, psycopg2.errors.UndefinedColumn):
-            print(
-                """ERROR: Table does not exist. 
+            logger.error(
+                """Table does not exist. 
 Please make sure you have initialized your OSM database with the Osmosis schema"""
             )
             sys.exit(1)
         except Exception as e:
-            print(f"ERROR: Something unexpected happened.\n\n{e.message}")
+            logger.error(
+                "Something unexpected happened. All we know is this: {} and this: {}".format(
+                    e, self._rows
+                )
+            )
+            sys.exit(1)
 
 
 class FilterHandler(osmium.SimpleHandler):
@@ -69,6 +82,8 @@ class FilterHandler(osmium.SimpleHandler):
         self.min_occurrences = min_occurrences
         self.node_rows = []
         self.area_rows = []
+        self.invalid_nodes = []
+        self.invalid_ways = []
 
     def _sanitize(self, raw_str):
         return (
@@ -91,17 +106,32 @@ class FilterHandler(osmium.SimpleHandler):
         """
         factory = osmium.geom.WKBFactory()
         if isinstance(osm_obj, osmium.osm.Node):
-            return factory.create_point(osm_obj)
-        elif isinstance(osm_obj, osmium.osm.Area):
-            # print(osm_obj)
-            return factory.create_multipolygon(osm_obj)
+            try:
+                return factory.create_point(osm_obj)
+            except RuntimeError:
+                (
+                    ": encountered an invalid geometry n{}".format(
+                        osm_obj.id,
+                    )
+                )
+                self.invalid_nodes.append(osm_obj.id)
+        if isinstance(osm_obj, osmium.osm.Area):
+            try:
+                return factory.create_multipolygon(osm_obj)
+            except RuntimeError:
+                logger.warning(
+                    "Encountered an invalid geometry w{}".format(
+                        osm_obj.orig_id(),
+                    )
+                )
+                self.invalid_ways.append(osm_obj.id)
 
     def _osm_as_pg_row(self, osm_obj):
-        # COPY public.nodes (id, version, user_id, tstamp, changeset_id, tags, geom) FROM stdin;
-        # 83516871	14	0	2020-02-02 08:51:47	0	"highway"=>"traffic_signals", "traffic_signals"=>"signal"	0101000020E6100000278A90BA1DF55BC06A4826F103614440
         return (
             "{id}\t{version}\t{uid}\t{tstamp}\t{changeset_id}\t{tags}\t{geom}".format(
-                id=osm_obj.id,
+                id=osm_obj.id
+                if isinstance(osm_obj, osmium.osm.Node)
+                else osm_obj.orig_id(),
                 version=osm_obj.version,
                 uid=osm_obj.uid,
                 tstamp=osm_obj.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
@@ -124,6 +154,9 @@ class FilterHandler(osmium.SimpleHandler):
         # dismiss any object with no tags
         if not obj.tags:
             return
+        # dismiss objects that have no name, unless the user wants them
+        if settings.SKIP_NO_NAME and "name" not in obj.tags:
+            return
         # dismiss any object with tags in the EXCLUDE_LIST.
         for t in obj.tags:
             if t.__str__() in settings.EXCLUDE_LIST:
@@ -139,28 +172,39 @@ class FilterHandler(osmium.SimpleHandler):
                 # Check if we reached the amount of objects by which we want to flush to PG
                 # If so, write to postgres....
                 # ...and clear the list.
-                if isinstance(obj, osmium.osm.Node):
-                    self.node_rows.append(self._osm_as_pg_row(obj))
-                    if len(self.node_rows) == settings.WRITE_AFTER:
-                        print(f"writing {settings.WRITE_AFTER} nodes to Postgres...")
-                        # print("\n".join(self.node_rows))
-                        self.flush_to_pg(self.node_rows, "nodes")
-                        self.node_rows.clear()
-                    return
+                if (
+                    isinstance(obj, osmium.osm.Node)
+                    and obj.id not in self.invalid_nodes
+                ):
+                    row = self._osm_as_pg_row(obj)
+                    if obj.id not in self.invalid_nodes:
+                        self.node_rows.append(row)
+                        if len(self.node_rows) == settings.WRITE_AFTER:
+                            logger.info(
+                                f"writing {settings.WRITE_AFTER} nodes to Postgres..."
+                            )
+                            # print("\n".join(self.node_rows))
+                            self.flush_to_pg(self.node_rows, "nodes")
+                            self.node_rows.clear()
+                        return
                 if isinstance(obj, osmium.osm.Area):
-                    self.area_rows.append(self._osm_as_pg_row(obj))
-                    if len(self.area_rows) == settings.WRITE_AFTER:
-                        print(f"writing {settings.WRITE_AFTER} areas to Postgres...")
-                        # print("\n".join(self.area_rows))
-                        self.flush_to_pg(self.area_rows, "ways")
-                        self.area_rows.clear()
-                    return
+                    row = self._osm_as_pg_row(obj)
+                    if obj.id not in self.invalid_ways:
+                        self.area_rows.append(row)
+                        if len(self.area_rows) == settings.WRITE_AFTER:
+                            logger.info(
+                                f"writing {settings.WRITE_AFTER} areas to Postgres..."
+                            )
+                            # print("\n".join(self.area_rows))
+                            self.flush_to_pg(self.area_rows, "ways")
+                            self.area_rows.clear()
+                        return
 
     def node(self, n):
         self._filter(n)
 
     def area(self, a):
-        if not settings.SKIP_WAYS:
+        if not settings.SKIP_WAYS and not isinstance(a, osmium.osm.Relation):
             self._filter(a)
 
     def relation(self, r):
@@ -184,19 +228,24 @@ def retrieve_taginfo(tag: str) -> dict:
 
 
 if __name__ == "__main__":
-    print(f"welcome to {sys.argv[0]}")
+
+    logger.info(f"welcome to osm-poi-database-maker")
+
     if len(sys.argv) != 2:
         print("usage: filter.py OSMFILE")
+        sys.exit(1)
+
     # Read existing tags.json if we retrieved it recently
     # TODO add a parameter to define what "recently" is and check the existing tags.json file to see if it needs updating.
     if os.path.exists("tags.json"):
-        print("tags file exists")
+        logger.info("tags file exists")
         with open("tags.json") as fh:
             tags = json.loads(fh.read())
+
     # If we don't have a tags.json yet, call the TagInfo API to retrieve
     # values and usage data for each key of interest.
     else:
-        print("we don't have a tags file, retrieving from TagInfo...")
+        logger.info("we don't have a tags file, retrieving from TagInfo...")
         tags = {
             "retrieval_date": datetime.now().isoformat(timespec="minutes"),
             "data": {},
@@ -215,8 +264,8 @@ if __name__ == "__main__":
     # support for this is not compiled into the pyosmium binary by default.
     # fh.apply_file(sys.argv[1], locations=True, idx="dense_mmap_array")
     if len(fh.node_rows) > 0:
-        print(f"flushing final {len(fh.node_rows)} nodes to Postgres...")
+        logger.info(f"flushing final {len(fh.node_rows)} nodes to Postgres...")
         fh.flush_to_pg(fh.node_rows, "nodes")
     if len(fh.area_rows) > 0:
-        print(f"flushing final {len(fh.area_rows)} areas to Postgres...")
+        logger.info(f"flushing final {len(fh.area_rows)} areas to Postgres...")
         fh.flush_to_pg(fh.area_rows, "ways")
