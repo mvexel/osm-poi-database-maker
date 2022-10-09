@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="CGImap 0.8.8 (3733206 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+    <node id="2333368646" visible="true" version="5" changeset="114007084" timestamp="2021-11-19T20:21:26Z" user="keithalleman" uid="6618675" lat="40.7669100" lon="-111.8930120">
+        <tag k="addr:city" v="Salt Lake City" />
+        <tag k="addr:housenumber" v="55" />
+        <tag k="addr:postcode" v="84101" />
+        <tag k="addr:street" v="West 100 South" />
+        <tag k="amenity" v="restaurant" />
+        <tag k="name" v="The Ivy" />
+        <tag k="outdoor_seating" v="yes" />
+        <tag k="website" v="https://ivyandvarley.com" />
+    </node>
+</osm>
