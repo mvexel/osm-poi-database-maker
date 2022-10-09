@@ -44,8 +44,6 @@ class OsmFileProcessor:
         # support for this is not compiled into the pyosmium binary by default.
         # fh.apply_file(sys.argv[1], locations=True, idx="dense_mmap_array")
         if len(fh.node_rows) > 0:
-            logger.info(f"flushing final {len(fh.node_rows)} nodes to Postgres...")
             fh.flush_to_pg(fh.node_rows, "nodes")
         if len(fh.area_rows) > 0:
-            logger.info(f"flushing final {len(fh.area_rows)} areas to Postgres...")
             fh.flush_to_pg(fh.area_rows, "ways")
