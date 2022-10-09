@@ -167,9 +167,9 @@ class FilterHandler(osmium.SimpleHandler):
         # dismiss objects that have no name, unless the user wants them
         if settings.SKIP_NO_NAME and "name" not in obj.tags:
             return
-        # dismiss any object with tags in the EXCLUDE_LIST.
-        for t in obj.tags:
-            if t.__str__() in settings.EXCLUDE_LIST:
+        # dismiss any object with tag combinations in the EXCLUDE_LIST.
+        for exclude_tuple in settings.EXCLUDE_LIST:
+            if set([t.__str__() for t in obj.tags]) >= set(exclude_tuple):
                 return
         # iterate over those objects that have one of the keys we're interested in
         for key in set(self.toi.keys()).intersection([t.k for t in obj.tags]):

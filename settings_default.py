@@ -31,12 +31,11 @@ SKIP_NO_NAME = False
 # TRIM_TAGS = ["note", "fixme"]
 TRIM_TAGS = []
 
-# You can add specific key=value pairs that you would like to exclude to the list below,
-# in "key=value" string format. This is useful if, for example, you would like to have all amenity objects,
-# but you're not interested in parking. In that case, you would add "amenity=parking" to this list.
-# You would still get all other features with
-# Example: EXCLUDE_LIST = ["amenity=parking", "leisure=slipway", "leisure=nature_reserve"]
-EXCLUDE_LIST = []
+# You can add specific key=value pair combinations that you would like to exclude to the list below,
+# as tuples of "key=value" strings. This is useful if, for example, you would like to have all amenity objects,
+# but you're not interested in parking. In that case, you would add ("amenity=parking") to this list.
+# You would still get all other "amenity" features. The entries can consist of a single tag, or a combination.
+EXCLUDE_LIST = ()
 
 # The PostgreSQL connection string to connect to your PostgreSQL database.
 # See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING for information
