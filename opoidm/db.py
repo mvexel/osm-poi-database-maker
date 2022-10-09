@@ -23,7 +23,7 @@ class PostgresWriter:
         """
         Write OSM objects to the PostgreSQL database
         """
-        logger.info(f"Writing {len(self._rows)} POI to database")
+        logger.info(f"Writing {len(self._rows)} records to database...")
         try:
             with psycopg2.connect(settings.PG_CONNECT_STRING) as pg_conn:
                 with pg_conn.cursor() as cursor:
