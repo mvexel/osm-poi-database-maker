@@ -25,9 +25,8 @@ class PostgresWriter:
     Class to handle interaction with the Postgres database
     """
 
-    def __init__(self, connect_string, rows, osm_type) -> None:
+    def __init__(self, rows, osm_type) -> None:
         super().__init__()
-        self._connect_string = connect_string
         self._rows = rows
         self._osm_type = osm_type
 
@@ -36,8 +35,11 @@ class PostgresWriter:
         Write OSM objects to the PostgreSQL database
         """
         try:
-            with psycopg2.connect(self._connect_string) as conn:
-                with conn.cursor() as cursor:
+            with psycopg2.connect(settings.PG_CONNECT_STRING) as pg_conn:
+                with pg_conn.cursor() as cursor:
+                    psycopg2.extensions.register_type(
+                        psycopg2.extensions.UNICODE, cursor
+                    )
                     geom_column = "geom" if self._osm_type == "nodes" else "linestring"
                     with StringIO("\n".join([row for row in self._rows])) as fh:
                         cursor.copy_from(
@@ -150,7 +152,7 @@ class FilterHandler(osmium.SimpleHandler):
         )
 
     def flush_to_pg(self, rows, osm_type):
-        pg_writer = PostgresWriter(settings.PG_CONNECT_STRING, rows, osm_type)
+        pg_writer = PostgresWriter(rows, osm_type)
         pg_writer.write_osm_objects()
 
     def _filter(self, obj) -> None:
