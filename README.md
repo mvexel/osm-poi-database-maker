@@ -9,7 +9,7 @@ This script is not here to solve all your problems, but to get you 80% on your w
 The most important caveats are:
 
 1. OSM Relations are not supported. Very few POI are represented as relations, so that should not matter to the vast majority of users.
-2. POI that are represented as ways (polygons) in OSM are stored with their original geometry: you get a database with both points and polygons. The script could be more opinionated about this and store, for example, a centroid of an OSM way as the POI in the database, but I decided to leave that up to you. With the default settings, you can end up with some pretty large POI polygons, for example parks and universities. You can apply your own PostGIS magic to post-process those however you want. For example, you could simply delete the larger areas with something like `DELETE FROM WAYS WHERE ST_Area(ST_Transform(linestring, 2163)) > 10000;` (use your favorite local CRS for best results.)
+2. POI that are represented as ways (polygons) in OSM are stored with their original geometry: you get a database with both points and polygons. The script could be more opinionated about this and store, for example, a centroid of an OSM way as the POI in the database, but I decided to leave that up to you. With the default settings, you can end up with some pretty large POI polygons, for example parks and universities. You can apply your own PostGIS magic to post-process those however you want. See Extras below for an example.
 
 <sup>1</sup> The [TagInfo key / value API](https://taginfo.openstreetmap.org/taginfo/apidoc#api_4_key_values) returns the fields `count` and `in_wiki` for each key/value pair. We use `in_wiki` to filter out those tags that are not documented in the wiki at all. You can set a lower threshold value for `count` in `settings.py`.
 
@@ -42,13 +42,23 @@ pip install -r requirements.txt
 filter.py OSM_FILE
 ```
 
-## Extras
+### Updating
+
+There is currently no functionality to update an already-existing database. If you would like to be able to do this, consider funding development (see Support, below) or submitting a pull request.
+
+### Extras
 If you want a database with only point features without discarding OSM polygons that have POI attributes, you can use the `ways_to_cantroids.sql` SQL script after populating the database. This script converts all polygons that are smaller than a reasonable threshold (the script uses 20000 m<sup>2</sup>) to nodes by taking the centroid of the polygon and incrementing the id value by 36000000000 to avoid conflicts in the overlapping id spaces. Any polygons larger than the threshold value are considered to be meaningless as point features.
+
+## Development
+
+I welcome your contributions in code, documentation and suggestions for enhancements.
+
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+### Testing
+
+Tests are still under development
 
 ## Thanks
 
 Thanks to @joto and @lonvia for creating and maintaining `osmium` and `pyosmium`!
-
-## Support
-
-If you find this and / or my other work for the OSM community useful, please consider [supporting me on Patreon](https://patreon.com/mvexel). Thanks!
