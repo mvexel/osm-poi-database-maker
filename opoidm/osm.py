@@ -14,11 +14,11 @@ class TagInfo:
         super.__init__(self)
 
     @staticmethod
-    def get_values(tag: str) -> dict:
+    def get_values(key: str) -> dict:
         """
         Retrieves all values for this tag key from the TagInfo wiki, and returns those values and their counts that have a corresponding OSM wiki entry.
         """
-        TAGINFO_VALUES_API_URL = f"https://taginfo.openstreetmap.org/api/4/key/values?key={tag}&page=1&rp=100&sortname=count_ways&sortorder=desc"
+        TAGINFO_VALUES_API_URL = f"https://taginfo.openstreetmap.org/api/4/key/values?key={key}&page=1&rp=100&sortname=count_ways&sortorder=desc"
         tag_values = requests.get(TAGINFO_VALUES_API_URL).json()
         return dict(
             [
