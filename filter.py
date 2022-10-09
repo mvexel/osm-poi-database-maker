@@ -84,6 +84,8 @@ class FilterHandler(osmium.SimpleHandler):
         self.area_rows = []
         self.invalid_nodes = []
         self.invalid_ways = []
+        self._node_counter = 0
+        self._way_counter = 0
 
     def _sanitize(self, raw_str: str):
         return (
@@ -207,9 +209,19 @@ class FilterHandler(osmium.SimpleHandler):
                         return
 
     def node(self, n):
+        self._node_counter += 1
+        if not self._node_counter % 1000000:
+            logger.info(
+                f"Another 1M nodes evaluated, {self._node_counter / 1000000}M total"
+            )
         self._filter(n)
 
     def area(self, a):
+        self._way_counter += 1
+        if not self._way_counter % 1000000:
+            logger.info(
+                f"Another 1M ways evaluated, {self._way_counter / 1000000}M total"
+            )
         if not settings.SKIP_WAYS and not isinstance(a, osmium.osm.Relation):
             self._filter(a)
 
