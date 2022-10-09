@@ -2,3 +2,4 @@ _nodecache
 tags.json
 venv/
 __pycache__/
+logs/
