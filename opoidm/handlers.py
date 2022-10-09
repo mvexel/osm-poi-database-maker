@@ -62,8 +62,9 @@ class FilterHandler(osmium.SimpleHandler):
                 return factory.create_multipolygon(osm_obj)
             except RuntimeError:
                 logger.warning(
-                    "Encountered an invalid geometry w{}".format(
-                        osm_obj.orig_id(),
+                    "Encountered an invalid geometry {osmtype}{osmid}".format(
+                        osmtype="w" if isinstance(osm_obj, osmium.osm.Way) else "r",
+                        osmid=osm_obj.orig_id(),
                     )
                 )
                 self.invalid_ways.append(osm_obj.id)
