@@ -67,10 +67,10 @@ Please make sure you have initialized your OSM database with the Osmosis schema"
             )
             sys.exit(1)
         except Exception as e:
+            with open("logs/error_obj_list.csv", "w") as fh:
+                fh.write("\n".join([row for row in self._rows]))
             logger.error(
-                "Something unexpected happened. All we know is this: {} and this: {}".format(
-                    e, self._rows
-                )
+                f"{type(e)} - Something unexpected happened. All we know is this: {e}"
             )
             sys.exit(1)
 
