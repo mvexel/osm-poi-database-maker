@@ -35,7 +35,14 @@ TRIM_TAGS = []
 # in "key=value" string format. This is useful if, for example, you would like to have all amenity objects,
 # but you're not interested in parking. In that case, you would add "amenity=parking" to this list.
 # You would still get all other features with
-EXCLUDE_LIST = ["amenity=parking", "leisure=slipway", "leisure=nature_reserve"]
+EXCLUDE_LIST = [
+    "amenity=parking",
+    "leisure=slipway",
+    "leisure=nature_reserve",
+    "tourism=camp_pitch",
+    "amenity=bench",
+    "amenity=watering_place",
+]
 
 # The PostgreSQL connection string to connect to your PostgreSQL database.
 # See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING for information
