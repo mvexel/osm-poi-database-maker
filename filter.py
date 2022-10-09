@@ -97,6 +97,7 @@ class FilterHandler(osmium.SimpleHandler):
                     key=self._sanitize(tag.k), value=self._sanitize(tag.v)
                 )
                 for tag in osm_tags
+                if not tag.k in settings.TRIM_TAGS
             ]
         )
 
