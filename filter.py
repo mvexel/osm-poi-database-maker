@@ -228,6 +228,28 @@ def retrieve_taginfo(tag: str) -> dict:
     )
 
 
+class OsmFileProcessor:
+    def __init__(self, path, tags) -> None:
+        self._path = path
+        self._tags = tags
+
+    def process(self):
+        # Create the osmium handler instance
+        fh = FilterHandler(tags["data"], settings.MIN_OCCURENCES)
+
+        # We need locations=True so that osmium keeps the node locations cached in order to recreate the area geometries
+        fh.apply_file(self._path, locations=True)
+        # for larger files we should use a different index
+        # support for this is not compiled into the pyosmium binary by default.
+        # fh.apply_file(sys.argv[1], locations=True, idx="dense_mmap_array")
+        if len(fh.node_rows) > 0:
+            logger.info(f"flushing final {len(fh.node_rows)} nodes to Postgres...")
+            fh.flush_to_pg(fh.node_rows, "nodes")
+        if len(fh.area_rows) > 0:
+            logger.info(f"flushing final {len(fh.area_rows)} areas to Postgres...")
+            fh.flush_to_pg(fh.area_rows, "ways")
+
+
 if __name__ == "__main__":
 
     logger.info(f"welcome to osm-poi-database-maker")
@@ -252,21 +274,10 @@ if __name__ == "__main__":
             "data": {},
         }
         for osm_key in settings.KEYS:
-            print(f"retrieving TagInfo data for {osm_key}...")
+            logger.info(f"retrieving TagInfo data for {osm_key}...")
             tags["data"][osm_key] = retrieve_taginfo(osm_key)
         with open("tags.json", "w") as fh:
             fh.write(json.dumps(tags))
 
-    # Create the osmium handler instance
-    fh = FilterHandler(tags["data"], settings.MIN_OCCURENCES)
-    # We need locations=True so that osmium keeps the node locations cached in order to recreate the area geometries
-    fh.apply_file(sys.argv[1], locations=True)
-    # for larger files we should use a different index
-    # support for this is not compiled into the pyosmium binary by default.
-    # fh.apply_file(sys.argv[1], locations=True, idx="dense_mmap_array")
-    if len(fh.node_rows) > 0:
-        logger.info(f"flushing final {len(fh.node_rows)} nodes to Postgres...")
-        fh.flush_to_pg(fh.node_rows, "nodes")
-    if len(fh.area_rows) > 0:
-        logger.info(f"flushing final {len(fh.area_rows)} areas to Postgres...")
-        fh.flush_to_pg(fh.area_rows, "ways")
+    processor = OsmFileProcessor(sys.argv[1], tags)
+    processor.process()
