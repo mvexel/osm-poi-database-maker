@@ -85,9 +85,14 @@ class FilterHandler(osmium.SimpleHandler):
         self.invalid_nodes = []
         self.invalid_ways = []
 
-    def _sanitize(self, raw_str):
+    def _sanitize(self, raw_str: str):
         return (
-            raw_str.replace('"', '\\"').replace("\\", "\\\\").replace("\n", "||e'\\n'")
+            raw_str.replace("\\\\", "\\\\\\\\")
+            .replace('"', '\\\\"')
+            .replace("\n\r", "\\\\r")
+            .replace("\n", "\\\\r")
+            .replace("\r", "\\\\r")
+            .replace("\t", "\\\\t")
         )
 
     def _tags_as_hstore(self, osm_tags):
