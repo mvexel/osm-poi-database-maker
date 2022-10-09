@@ -122,10 +122,6 @@ class FilterHandler(osmium.SimpleHandler):
                     if obj.id not in self.invalid_nodes:
                         self.node_rows.append(row)
                         if len(self.node_rows) == settings.WRITE_AFTER:
-                            logger.info(
-                                f"writing {settings.WRITE_AFTER} nodes to Postgres..."
-                            )
-                            # print("\n".join(self.node_rows))
                             self.flush_to_pg(self.node_rows, "nodes")
                             self.node_rows.clear()
                         return
@@ -134,10 +130,6 @@ class FilterHandler(osmium.SimpleHandler):
                     if obj.id not in self.invalid_ways:
                         self.area_rows.append(row)
                         if len(self.area_rows) == settings.WRITE_AFTER:
-                            logger.info(
-                                f"writing {settings.WRITE_AFTER} areas to Postgres..."
-                            )
-                            # print("\n".join(self.area_rows))
                             self.flush_to_pg(self.area_rows, "ways")
                             self.area_rows.clear()
                         return
@@ -145,17 +137,13 @@ class FilterHandler(osmium.SimpleHandler):
     def node(self, n):
         self._node_counter += 1
         if not self._node_counter % 1000000:
-            logger.info(
-                f"Another 1M nodes evaluated, {self._node_counter / 1000000}M total"
-            )
+            logger.info(f"{int(self._node_counter / 1000000)}M nodes evaluated...")
         self._filter(n)
 
     def area(self, a):
         self._way_counter += 1
         if not self._way_counter % 1000000:
-            logger.info(
-                f"Another 1M ways evaluated, {self._way_counter / 1000000}M total"
-            )
+            logger.info(f"{int(self._way_counter / 1000000)}M ways evaluated...")
         if not settings.SKIP_WAYS and not isinstance(a, osmium.osm.Relation):
             self._filter(a)
 

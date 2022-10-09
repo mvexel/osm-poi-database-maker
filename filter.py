@@ -6,7 +6,7 @@ import os
 import sys
 from datetime import datetime
 
-import requests
+import click
 
 import settings
 from opoidm.osm import OsmFileProcessor, TagInfo
@@ -20,7 +20,9 @@ from opoidm.osm import OsmFileProcessor, TagInfo
 # logger.addHandler(handler)
 
 
-def main():
+@click.command
+@click.argument("osm_file")
+def main(osm_file):
     logger = logging.getLogger(__name__)
     logger.info(f"welcome to osm-poi-database-maker")
 
@@ -45,7 +47,7 @@ def main():
         with open("tags.json", "w") as fh:
             fh.write(json.dumps(tags))
 
-    processor = OsmFileProcessor(sys.argv[1], tags)
+    processor = OsmFileProcessor(osm_file, tags)
     processor.process()
 
 
