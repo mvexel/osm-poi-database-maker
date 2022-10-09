@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="CGImap 0.8.8 (2800522 spike-06.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <node id="358725918" visible="true" version="3" changeset="80819737" timestamp="2020-02-11T00:58:55Z" user="Horza" uid="40450" lat="30.3334895" lon="-81.5238391">
+  <tag k="amenity" v="place_of_worship"/>
+  <tag k="ele" v="3"/>
+  <tag k="fixme" v="The Duval property map shows this plot as being owned by &#9;REGENCY ASSEMBLY OF GOD INC. Not 100% sure if this is the same Regency assembly of God. I can't read the sign here on streetside, so no way to double check without scouting"/>
+  <tag k="gnis:county_id" v="031"/>
+  <tag k="gnis:created" v="08/28/1987"/>
+  <tag k="gnis:feature_id" v="302856"/>
+  <tag k="gnis:state_id" v="12"/>
+  <tag k="name" v="Regency Assembly of God Church"/>
+  <tag k="religion" v="christian"/>
+ </node>
+</osm>

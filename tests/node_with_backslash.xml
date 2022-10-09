@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="CGImap 0.8.8 (1958157 spike-08.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <node id="3351992260" visible="true" version="2" changeset="30327675" timestamp="2015-04-19T11:51:36Z" user="Alan Bragg" uid="443130" lat="25.2538752" lon="-80.7849311">
+  <tag k="information" v="route_marker"/>
+  <tag k="name" v="21\"/>
+  <tag k="tourism" v="information"/>
+ </node>
+</osm>
